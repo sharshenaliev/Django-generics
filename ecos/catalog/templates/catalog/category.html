@@ -12,9 +12,9 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
       <div class="container">
         <a href="{% url 'home' %}"><img src="./media/Logo.png" alt="Лого" style="max-width: 30%;"/></a>
-        <form class="d-flex" role="search">
-          <input class="form-control me-2 mt-3" type="search" placeholder="Поиск товара" aria-label="Поиск">
-          <button class="btn btn-outline-success mt-3" type="submit">Искать</button>
+        <form class="d-flex" action="{% url 'search' %}" method="get">
+          <input class="form-control me-2 mt-3" type="search" placeholder="Поиск товара" aria-label="Поиск" name="search">
+          <button class="btn btn-outline-success mt-3"  type="submit">Искать</button>
         </form>
       </div>
     </nav>
@@ -33,40 +33,49 @@
         </ul>
     </div>
   </div>
-  <div class="container mt-3">
+  <div class="container">
     <div class="row">
         {% for item in page_obj %}
         <div class="card mt-5 mx-auto" style="width: 15rem;">
           {% if item.image %}
-            <img src="{{ item.image }}" class="card-img-top" alt="...">
+            <img src="{{ item.image }}" class="mx-auto" alt="..." style="width: 200px; height: 200px; object-fit: cover;">
           {% else %}
             <img src="https://upload.wikimedia.org/wikipedia/commons/9/9a/%D0%9D%D0%B5%D1%82_%D1%84%D0%BE%D1%82%D0%BE.png" class="card-img-top" alt="">
           {% endif %}
-          <div class="card-header">
-            {{ item.category.title }}
-          </div>
             <div class="card-body">
-              <h4 class="card-title">
-                {{ item.title}}
-              </h4>
-              <h5 class="card-text">
+              <h5 class="card-title">
                 Цена: {{ item.price }} сом
               </h5>
+              <p class="card-text">
+                {{ item.title}}
+              </p>
             </div>
           </div>
         {% endfor %}
       </div>
     <hr>
-    <nav aria-label="Page navigation example">
+    <nav class="navbar-center">
       <ul class="pagination">
+          {% if page_obj.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo;</span></li>
+          {% endif %}
           {% for p in page_obj.paginator.page_range %}
-            {% if page_obj.number == p %}
-              <li class="page-item active" aria-current="page"><a class="page-link" href="?page={{ p }}">{{ p }}
-              <span class="sr-only"></span></a></li>
-            {% else %}
-              <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+            {% if p > page_obj.number|add:-4 and p < page_obj.number|add:4 %}
+                {% if page_obj.number == p %}
+                <li class="page-item active" aria-current="page"><a class="page-link" href="?page={{ p }}">{{ p }}
+                <span class="sr-only"></span></a></li>
+                {% else %}
+                <li class="page-item"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+                {% endif %}
             {% endif %}
           {% endfor %}
+          {% if page_obj.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link" href="#" tabindex="-1" aria-disabled="true">&raquo;</span></li>
+          {% endif %}
       </ul>
     </nav>
   </div>
