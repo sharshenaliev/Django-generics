@@ -3,7 +3,7 @@ from file import base
 
 
 def mydb():
-    for i in range(0, 10):
+    for i in range(0, 706):
         if base[i][0] == None:
             lactose = False
         else:

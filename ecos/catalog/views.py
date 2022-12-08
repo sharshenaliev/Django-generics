@@ -1,12 +1,15 @@
 from .models import Catalog, Category, Subcategory
-from django.views.generic import ListView, DetailView
+from .forms import CustomerForm
+from django.views.generic import View, ListView, DetailView, FormView
 from django.db.models import Q
+from django.shortcuts import redirect, render
+import requests
 
 
 class CatalogList(ListView):
     model = Catalog
     template_name = 'catalog/index.html'
-    paginate_by = 15
+    paginate_by = 20
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -18,7 +21,7 @@ class CatalogList(ListView):
 class Search(ListView):
     model = Catalog
     template_name = 'catalog/search.html'
-    paginate_by = 15
+    paginate_by = 20
 
     def get_queryset(self):
          return Catalog.objects.filter(Q(description_ru__icontains=self.request.GET.get('search')) |
@@ -92,3 +95,80 @@ class ShowProduct(DetailView):
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
         return context
+
+
+class Cart(ListView):
+    template_name = 'catalog/cart.html'
+
+    def get_queryset(self):
+         return self.request.session['queryset']
+
+    def post(self, request):
+        cart = request.session['cart']
+        product = self.request.POST.get('pk')
+        if product in cart:
+            cart.remove(product)
+        else:
+            cart.append(product)
+        request.session['cart'] = cart
+        request.session['queryset'] = Catalog.objects.filter(id__in=cart)
+        return redirect('cart')
+
+
+class Order(FormView):
+    template_name = 'catalog/order.html'
+    form_class = CustomerForm
+    success_url = '/success/'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['purchase'] = self.request.session['purchase']
+        if context['purchase'] < 2000:
+            context['delivery'] = 200
+        else:
+            context['delivery'] = 0
+        context['total'] = context['purchase'] + context['delivery']
+        return context
+
+    def post(self, request):
+        products = self.request.session['queryset']
+        quantity = self.request.POST.getlist('quantity')
+        purchase = 0
+        for i in range(0, len(quantity)):
+            purchase += int(quantity[i]) * products.values_list('price', flat=True)[i]
+        request.session['purchase'] = purchase
+        request.session['quantity'] = quantity
+        return redirect('order')
+
+
+class Success(View):
+    template_name = 'catalog/success.html'
+
+    def get(self, request):
+        message = 'Ваш заказ принят!'
+        return render(request, template_name='catalog/success.html', context={'message': message})
+
+    def post(self, request):
+        form = CustomerForm(request.POST)
+        order = ""
+        if form.is_valid():
+            for i in range(0, len(request.session['quantity'])):
+                order += str(request.session['quantity'][i]) + ' штук ' + str(request.session['queryset'].values_list('name_ru', flat=True)[i])
+
+            TOKEN = '1105029676:AAFouNcKmqpe5MOJ5neACqwZD5w7pgLjFMU'
+            chat_id = '826921885'
+
+            message = f"Номер телефона: {form.cleaned_data['phone']}. " \
+                      f"Имя клиента: {form.cleaned_data['name']}. " \
+                      f"Адрес: {form.cleaned_data['address']}. " \
+                      f"Стоимость: {request.session['purchase']} сом " \
+                      f'Заказ: {order}.'
+
+            url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
+
+            print(requests.get(url).json())  # this sends the message
+            return redirect('success')
+
+    def clean(self, request):
+        del request.session['cart']
+        request.session.modified = True
