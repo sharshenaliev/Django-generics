@@ -16,8 +16,6 @@ class CatalogList(ListView):
         context['subcategories'] = Subcategory.objects.all()
         context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
-        context['queryset'] = self.request.session.get('queryset')
         return context
 
 
@@ -70,10 +68,8 @@ class GetCategory(CatalogList):
         subcategory = Subcategory.objects.filter(id=self.kwargs['subcategory_id'])
         context['subcategory'] = subcategory
         context['title'] = subcategory.values_list('title_ru', flat=True)[0]
-        context['cart'] = list(map(int, self.request.session.get('cart', [])))
+        context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
-        context['queryset'] = self.request.session['queryset']
         return context
 
 
@@ -105,8 +101,6 @@ class ShowProduct(DetailView):
         context['subcategories'] = Subcategory.objects.all()
         context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
-        context['queryset'] = self.request.session['queryset']
         return context
 
 
