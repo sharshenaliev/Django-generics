@@ -5,23 +5,29 @@ from django.db.models import Q
 from django.shortcuts import redirect, render
 import requests
 
-
 class CatalogList(ListView):
     model = Catalog
     template_name = 'catalog/index.html'
-    paginate_by = 20
+    paginate_by = 24
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
+<<<<<<< HEAD
+        context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
+        context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
+=======
+        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
+        context['queryset'] = self.request.session.get('queryset')
+>>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
 class Search(ListView):
     model = Catalog
     template_name = 'catalog/search.html'
-    paginate_by = 20
+    paginate_by = 24
 
     def get_queryset(self):
          return Catalog.objects.filter(Q(description_ru__icontains=self.request.GET.get('search')) |
@@ -64,7 +70,16 @@ class GetCategory(CatalogList):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
-        context['subcategory'] = Subcategory.objects.filter(id=self.kwargs['subcategory_id'])
+        subcategory = Subcategory.objects.filter(id=self.kwargs['subcategory_id'])
+        context['subcategory'] = subcategory
+        context['title'] = subcategory.values_list('title_ru', flat=True)[0]
+<<<<<<< HEAD
+        context['cart'] = list(map(int, self.request.session.get('cart', [])))
+        context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
+=======
+        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
+        context['queryset'] = self.request.session['queryset']
+>>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
@@ -94,6 +109,13 @@ class ShowProduct(DetailView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
+<<<<<<< HEAD
+        context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
+        context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
+=======
+        context['cart'] = list(map(int, self.request.session.get('cart', [0])))
+        context['queryset'] = self.request.session['queryset']
+>>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
@@ -104,16 +126,18 @@ class Cart(ListView):
          return self.request.session['queryset']
 
     def post(self, request):
-        cart = request.session['cart']
         product = self.request.POST.get('pk')
+        cart = self.request.session.get('cart', ['0'])
         if product in cart:
             cart.remove(product)
         else:
             cart.append(product)
-        request.session['cart'] = cart
-        request.session['queryset'] = Catalog.objects.filter(id__in=cart)
-        return redirect('cart')
-
+        self.request.session['cart'] = cart
+        self.request.session['queryset'] = Catalog.objects.filter(id__in=cart)
+        if product == '0':
+            return redirect('cart')
+        else:
+            return redirect(request.META.get('HTTP_REFERER'))
 
 class Order(FormView):
     template_name = 'catalog/order.html'
@@ -123,7 +147,7 @@ class Order(FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['purchase'] = self.request.session['purchase']
-        if context['purchase'] < 2000:
+        if context['purchase'] < 3000:
             context['delivery'] = 200
         else:
             context['delivery'] = 0
@@ -136,8 +160,8 @@ class Order(FormView):
         purchase = 0
         for i in range(0, len(quantity)):
             purchase += int(quantity[i]) * products.values_list('price', flat=True)[i]
-        request.session['purchase'] = purchase
-        request.session['quantity'] = quantity
+        self.request.session['purchase'] = purchase
+        self.request.session['quantity'] = quantity
         return redirect('order')
 
 
@@ -152,8 +176,8 @@ class Success(View):
         form = CustomerForm(request.POST)
         order = ""
         if form.is_valid():
-            for i in range(0, len(request.session['quantity'])):
-                order += str(request.session['quantity'][i]) + ' штук ' + str(request.session['queryset'].values_list('name_ru', flat=True)[i])
+            for i in range(0, len(self.request.session['quantity'])):
+                order += str(self.request.session['quantity'][i]) + ' штук ' + str(self.request.session['queryset'].values_list('name_ru', flat=True)[i])
 
             TOKEN = '1105029676:AAFouNcKmqpe5MOJ5neACqwZD5w7pgLjFMU'
             chat_id = '826921885'
@@ -166,9 +190,7 @@ class Success(View):
 
             url = f"https://api.telegram.org/bot{TOKEN}/sendMessage?chat_id={chat_id}&text={message}"
 
-            print(requests.get(url).json())  # this sends the message
-            return redirect('success')
-
-    def clean(self, request):
-        del request.session['cart']
-        request.session.modified = True
+            print(requests.get(url).json())
+            del self.request.session['cart']
+            self.request.session.modified = True
+        return redirect('success')
