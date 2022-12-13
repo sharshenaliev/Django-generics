@@ -14,13 +14,10 @@ class CatalogList(ListView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
-<<<<<<< HEAD
         context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-=======
         context['cart'] = list(map(int, self.request.session.get('cart', [0])))
         context['queryset'] = self.request.session.get('queryset')
->>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
@@ -73,13 +70,10 @@ class GetCategory(CatalogList):
         subcategory = Subcategory.objects.filter(id=self.kwargs['subcategory_id'])
         context['subcategory'] = subcategory
         context['title'] = subcategory.values_list('title_ru', flat=True)[0]
-<<<<<<< HEAD
         context['cart'] = list(map(int, self.request.session.get('cart', [])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-=======
         context['cart'] = list(map(int, self.request.session.get('cart', [0])))
         context['queryset'] = self.request.session['queryset']
->>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
@@ -109,13 +103,10 @@ class ShowProduct(DetailView):
         context = super().get_context_data(**kwargs)
         context['categories'] = Category.objects.all()
         context['subcategories'] = Subcategory.objects.all()
-<<<<<<< HEAD
         context['cart'] = list(map(int, self.request.session.get('cart', ['0'])))
         context['queryset'] = Catalog.objects.filter(id__in=context['cart'])
-=======
         context['cart'] = list(map(int, self.request.session.get('cart', [0])))
         context['queryset'] = self.request.session['queryset']
->>>>>>> 8745b7cc7907fe060fb964e3cf3b26e4245b9b3a
         return context
 
 
