@@ -2,7 +2,7 @@ from .models import Catalog, Category, Subcategory
 from .forms import CustomerForm
 from django.views.generic import View, ListView, DetailView, FormView
 from django.db.models import Q
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, reverse
 import requests
 
 class CatalogList(ListView):
@@ -122,7 +122,7 @@ class Cart(ListView):
         if product == '0':
             return redirect('cart')
         else:
-            return redirect(request.META.get('HTTP_REFERER'))
+            return redirect(request.META.get('HTTP_REFERER') + '#section')
 
 class Order(FormView):
     template_name = 'catalog/order.html'
@@ -137,6 +137,7 @@ class Order(FormView):
         else:
             context['delivery'] = 0
         context['total'] = context['purchase'] + context['delivery']
+        self.request.session['purchase'] = context['total']
         return context
 
     def post(self, request):

@@ -3,11 +3,6 @@
 
 
 {% block content %}
-{% load static %}
-<script src="{% static 'bootstrap-input-spinner.js' %}"></script>
-<script>
-    $("input[type='number']").inputSpinner()
-</script>
 <hr>
 <form id="form" action="{% url 'order' %}" method="post">{% csrf_token %}</form>
   <div class="container">

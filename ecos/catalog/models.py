@@ -2,8 +2,8 @@ from django.db import models
 
 
 class Catalog(models.Model):
-    name_ru = models.CharField(max_length=100)
-    name_eng = models.CharField(max_length=100)
+    name_ru = models.CharField(max_length=150)
+    name_eng = models.CharField(max_length=150)
     price = models.IntegerField(blank=True)
     image = models.CharField(max_length=150, blank=True)
     description_ru = models.TextField()
